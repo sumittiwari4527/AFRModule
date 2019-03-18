@@ -1,0 +1,6 @@
+framework module CBORSwift {
+  umbrella header "CBORSwift-umbrella.h"
+
+  export *
+  module * { export * }
+}
