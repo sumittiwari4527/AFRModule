@@ -15,3 +15,5 @@ For IOS:
 For Android:
 
 Still Under development
+
+@All rights reserved by Sumit Kumar Tiwari
