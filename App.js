@@ -9,6 +9,7 @@
 
 import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, View,NativeModules,NativeEventEmitter,FlatList,TouchableOpacity,Button,TextInput} from 'react-native';
+import {AFREventEmitter,scanDeviceReady,scanWifiReady,scanDevice,connect,disconnect,rescanDevice,provision,removeSavedWifi,listWifiNetwork,getSecurityType} from './AFRModule'
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
   android:
@@ -18,30 +19,7 @@ const instructions = Platform.select({
 
 type Props = {};
 
-  function getSecurityType(type)
-  {
-    switch(type)
-    {
-      case "0":
-      return 'Open'
-      break;
-      case "1":
-      return 'WEP'
-      break;
-      case "2":
-      return 'WPA'
-      break;
-      case "3":
-      return 'WPA2'
-      break;
-      case "4":
-      return 'Unsupported'
-      break;
-      default:
-      return 'Unsupported'
-      break;
-    }
-  }
+  
 export default class App extends Component<Props> {
   constructor(props)
   {
@@ -61,13 +39,13 @@ export default class App extends Component<Props> {
       remove:false
     }
 
-     const onDeviceFound = new NativeEventEmitter(NativeModules.AFROperations)
+     // const onDeviceFound = new NativeEventEmitter(NativeModules.AFROperations)
 // subscribe to event
-onDeviceFound.addListener(
+AFREventEmitter.addListener(
   "onDeviceFound",
   res =>this.deviceFound(res)
 )
-onDeviceFound.addListener(
+AFREventEmitter.addListener(
   "onWifiRouterFound",
   res=>this.wifiRouterFound(res)
   )
@@ -75,9 +53,13 @@ onDeviceFound.addListener(
   }
   componentDidMount() {
 
-    NativeModules.AFROperations.scanReady();
-    NativeModules.AFROperations.scanWifiReady()
-      NativeModules.AFROperations.scanDevice();
+    // NativeModules.AFROperations.scanReady();
+    scanDeviceReady();
+    // NativeModules.AFROperations.scanWifiReady()
+    scanWifiReady();
+      //NativeModules.AFROperations.scanDevice();
+      scanDevice();
+
   }
   wifiRouterFound(res)
   {
@@ -103,25 +85,30 @@ peripherals.push({key:JSON.parse(res.peripherals[i]).identifier,value:JSON.parse
   {
     if(item.value.state == 0)
     {
-      NativeModules.AFROperations.connect(item.value.identifier)
+      // NativeModules.AFROperations.connect(item.value.identifier)
+      connect(item.value.identifier)
       this.setState({selectedDevice:item})
     }
     else
     {
-      NativeModules.AFROperations.disconnect(item.value.identifier)
-      NativeModules.AFROperations.rescanDevice()
+      // NativeModules.AFROperations.disconnect(item.value.identifier)
+      disconnect(item.value.identifier);
+      // NativeModules.AFROperations.rescanDevice()
+      rescanDevice();
       this.setState({routers:[]})
     }
-    //rescanDevice
+    //rescanDevicec
 
   }
   removeOperation(item)
   {
-NativeModules.AFROperations.removeWifi(this.state.selectedDevice.value.identifier,parseInt(item.key))
+// NativeModules.AFROperations.removeWifi(this.state.selectedDevice.value.identifier,parseInt(item.key))
+removeSavedWifi(this.state.selectedDevice.value.identifier,item.key)
   }
   wifiOperation(item)
   {
-NativeModules.AFROperations.provisionWifi(this.state.selectedDevice.value.identifier,item.ssid,this.state.save,this.state.password)
+// NativeModules.AFROperations.provisionWifi(this.state.selectedDevice.value.identifier,item.ssid,this.state.save,this.state.password)
+provision(this.state.selectedDevice.value.identifier,item.ssid,this.state.save,this.state.password)
 this.setState({selectedRouter:item})
   }
 
@@ -130,8 +117,8 @@ this.setState({selectedRouter:item})
     return (
       <View style={styles.container}>
       <View style={{flex:0.5,flexDirection:'row',justifyContent:'center',alignItems:'center'}}>
-      <Button onPress={()=>{NativeModules.AFROperations.listWifiNetwork(this.state.selectedDevice.value.identifier)}} title={'List WiFi'} />
-      <Button onPress={()=>{NativeModules.AFROperations.rescanDevice();}} title={'Scan'} />
+      <Button onPress={()=>{listWifiNetwork(this.state.selectedDevice.value.identifier)}} title={'List WiFi'} />
+      <Button onPress={()=>{rescanDevice();}} title={'Scan'} />
       <Button onPress={()=>{this.setState({save:!this.state.save})}} title={this.state.save ? 'Connect-Mode' :'Save-Mode'} />
       <Button onPress={()=>{this.setState({remove:!this.state.remove})}} title={this.state.remove ? 'Remove-On' :'Remove-Off'} />
       </View>
